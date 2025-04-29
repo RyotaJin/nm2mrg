@@ -15,3 +15,5 @@ LazyData: true
 Imports: 
     xpose
 RoxygenNote: 7.3.2
+Suggests: 
+    shiny
