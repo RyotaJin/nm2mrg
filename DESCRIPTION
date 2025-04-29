@@ -1,11 +1,10 @@
 Package: nm2mrg
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Convert NONMEM Model (.mod) To Mrgsolve Model (.cpp)
 Version: 0.1.0
 Authors@R: c(
     person(
-      "Jane", "Doe",
-      email = "jane@example.com",
+      "Ryota", "Jin",
       role = c("aut", "cre")
     )
   )
@@ -13,3 +12,6 @@ Description: Description to be determined.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Imports: 
+    xpose
+RoxygenNote: 7.3.2
