@@ -45,7 +45,8 @@ nm2mrg <- function(mod_name, dir) {
   mrg_mod$cmt <- paste0("$CMT\n", tmp_cmt, "\n")
 
 
-  tmp_pk <- paste0(tmp_mod[tmp_mod$subroutine == "pk",]$code, collapse = ";\n")
+  tmp_pk <- sapply(tmp_mod[tmp_mod$subroutine == "pk",]$code, replace_pow_from_string, USE.NAMES = FALSE)
+  tmp_pk <- paste0(tmp_pk, collapse = ";\n")
   mrg_mod$pk <- paste0("$PK\n", tmp_pk, ";\n")
 
 
@@ -84,16 +85,18 @@ nm2mrg <- function(mod_name, dir) {
   mrg_mod$sigma <- paste0("$SIGMA\n", tmp_sigma, "\n")
 
 
-  tmp_des <- paste0(tmp_mod[tmp_mod$subroutine == "des",]$code, collapse = ";\n")
+  tmp_des <- sapply(tmp_mod[tmp_mod$subroutine == "des",]$code, replace_pow_from_string, USE.NAMES = FALSE)
+  tmp_des <- paste0(tmp_des, collapse = ";\n")
   mrg_mod$des <- paste0("$DES\n", tmp_des, ";\n")
 
 
-  tmp_error <- paste0(tmp_mod[tmp_mod$subroutine == "err",]$code, collapse = ";\n")
+  tmp_error <- sapply(tmp_mod[tmp_mod$subroutine == "err",]$code, replace_pow_from_string, USE.NAMES = FALSE)
+  tmp_error <- paste0(tmp_error, collapse = ";\n")
   mrg_mod$error <- paste0("$ERROR\n", tmp_error, ";\n")
-
 
   return(paste(mrg_mod, collapse = "\n"))
 }
+
 
 extract_param <- function(prm_string) {
   extracted_params <- gsub("\\(|\\)| ", "", prm_string)
@@ -104,4 +107,30 @@ extract_param <- function(prm_string) {
     "2" = extracted_params[2],
     "3" = extracted_params[2])
   return(extracted_params)
+}
+
+
+replace_pow_from_string <- function(expr_str) {
+  expr <- parse(text = expr_str)[[1]]
+
+  replace_pow <- function(expr) {
+    if (is.call(expr)) {
+      op <- as.character(expr[[1]])
+      if (op %in% c("^")) {
+        return(as.call(list(
+          as.name("pow"),
+          replace_pow(expr[[2]]),
+          replace_pow(expr[[3]])
+        )))
+      } else {
+        return(as.call(lapply(expr, replace_pow)))
+      }
+    } else if (is.pairlist(expr)) {
+      return(as.pairlist(lapply(expr, replace_pow)))
+    } else {
+      return(expr)
+    }
+  }
+
+  paste(deparse(replace_pow(expr)), collapse = "")
 }
