@@ -7,7 +7,7 @@
 #'
 #' @return A character string representing the mrgsolve model file content.
 #' @export
-nm2mrg <- function(mod_name, dir) {
+nm2mrg <- function(mod_name, dir = "./") {
 
   tmp_mod <- xpose::read_nm_model(runno = mod_name, prefix = "", dir = dir, ext = ".mod")
   tmp_mod <- tmp_mod[tmp_mod$code != "",]

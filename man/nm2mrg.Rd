@@ -4,7 +4,7 @@
 \alias{nm2mrg}
 \title{Convert NONMEM model to mrgsolve format}
 \usage{
-nm2mrg(mod_name, dir)
+nm2mrg(mod_name, dir = "./")
 }
 \arguments{
 \item{mod_name}{A character string specifying the model name (run number) without extension.}
