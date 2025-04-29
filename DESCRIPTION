@@ -9,8 +9,7 @@ Authors@R: c(
       role = c("aut", "cre")
     )
   )
-Description: More about what it does (maybe more than one line).
-    Continuation lines should be indented.
-License: What license is it under?
+Description: Description to be determined.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
