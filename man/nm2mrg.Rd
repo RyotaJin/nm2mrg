@@ -4,12 +4,14 @@
 \alias{nm2mrg}
 \title{Convert NONMEM model to mrgsolve format}
 \usage{
-nm2mrg(mod_name, dir = "./")
+nm2mrg(mod_name, dir = "./", use_final = FALSE)
 }
 \arguments{
 \item{mod_name}{A character string specifying the model name (run number) without extension.}
 
 \item{dir}{A character string specifying the directory where the NONMEM control stream file is located.}
+
+\item{use_final}{A logical value indicating whether to use the final estimates for parameters, omega, and sigma. If TRUE, the function will use the final estimates from the NONMEM output files.}
 }
 \value{
 A character string representing the mrgsolve model file content.
