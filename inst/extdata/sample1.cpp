@@ -2,12 +2,12 @@ $PROB SAMPLE (2-COMPARTMENT MODEL)
 
 $PLUGIN autodec nm-vars
 
-$PARAM @annotated
-THETA1 : 0.1 : CL [L/day]
-THETA2 : 1 : V1 [L]
-THETA3 : 0.1 : Q [L/day]
-THETA4 : 1 : V2 [L]
-THETA5 : 0.1 : W [-]
+$THETA @annotated
+0.1 : CL [L/day]
+1 : V1 [L]
+0.1 : Q [L/day]
+1 : V2 [L]
+0.1 : W [-]
 
 $CMT
 CENTRAL

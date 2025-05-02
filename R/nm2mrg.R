@@ -7,7 +7,7 @@
 #'
 #' @return A character string representing the mrgsolve model file content.
 #' @export
-nm2mrg <- function(mod_name, dir = "./") {
+nm2mrg <- function(mod_name, dir = "./", use_final = FALSE) {
 
   tmp_mod <- xpose::read_nm_model(runno = mod_name, prefix = "", dir = dir, ext = ".mod")
   tmp_mod <- tmp_mod[tmp_mod$code != "",]
@@ -20,22 +20,16 @@ nm2mrg <- function(mod_name, dir = "./") {
   mrg_mod$plugin <- "$PLUGIN autodec nm-vars\n"
 
 
-  if (any(tmp_mod[tmp_mod$subroutine == "the", "comment"] != "")) {
-    tmp_param <- "$PARAM @annotated\n"
-    f_the_anno <- TRUE
+  if(use_final) {
+    tmp_param <- get_finalestimate_theta(mod_name, dir)
   } else {
-    tmp_param <- "$PARAM\n"
-    f_the_anno <- FALSE
-  }
-
-  for (i in 1:nrow(tmp_mod[tmp_mod$subroutine == "the", ])) {
-    tmp_theta <- tmp_mod[tmp_mod$subroutine == "the", ][i,]
-    param <- extract_param(tmp_theta$code)
-    param <- paste0("THETA", i, " : ", param)
-    if (f_the_anno) {
+    tmp_param <- "$THETA @annotated\n"
+    for (i in 1:nrow(tmp_mod[tmp_mod$subroutine == "the", ])) {
+      tmp_theta <- tmp_mod[tmp_mod$subroutine == "the", ][i,]
+      param <- extract_param(tmp_theta$code)
       param <- paste0(param, " : ", tmp_theta$comment)
+      tmp_param <- paste0(tmp_param, param, "\n")
     }
-    tmp_param <- paste0(tmp_param, param, "\n")
   }
   mrg_mod$param <- tmp_param
 
@@ -52,39 +46,48 @@ nm2mrg <- function(mod_name, dir = "./") {
   mrg_mod$pk <- paste0("$PK\n", tmp_pk, "\n")
 
 
-  tmp_omega <- ""
-  omega_counter <- 0
-  f_omega_header <- TRUE
-  for (i in 1:nrow(tmp_mod[tmp_mod$subroutine == "ome",])) {
-    tmp_omega_code <- tmp_mod[tmp_mod$subroutine == "ome", "code"][i,]
-    if (grepl("BLOCK", tmp_omega_code)){
-      omega_counter <- gsub("BLOCK|\\(|\\)", "", tmp_omega_code)
-      omega_counter <- as.numeric(omega_counter)
-      tmp_omega <- paste0(tmp_omega, "$OMEGA @block\n")
-      f_omega_header <- FALSE
-      next()
-    }
-    if (omega_counter == 0 & f_omega_header) {
-      tmp_omega <- paste0(tmp_omega, "$OMEGA\n")
-      f_omega_header <- FALSE
-    }
+  if(use_final) {
+    tmp_omega <- get_finalestimate_omega(mod_name, dir)
+  } else {
+    tmp_omega <- ""
+    omega_counter <- 0
+    f_omega_header <- TRUE
+    for (i in 1:nrow(tmp_mod[tmp_mod$subroutine == "ome",])) {
+      tmp_omega_code <- tmp_mod[tmp_mod$subroutine == "ome", "code"][i,]
+      if (grepl("BLOCK", tmp_omega_code)){
+        omega_counter <- gsub("BLOCK|\\(|\\)", "", tmp_omega_code)
+        omega_counter <- as.numeric(omega_counter)
+        tmp_omega <- paste0(tmp_omega, "$OMEGA @block\n")
+        f_omega_header <- FALSE
+        next()
+      }
+      if (omega_counter == 0 & f_omega_header) {
+        tmp_omega <- paste0(tmp_omega, "$OMEGA\n")
+        f_omega_header <- FALSE
+      }
 
-    tmp_omega <- paste0(tmp_omega, tmp_omega_code, "\n")
+      tmp_omega <- paste0(tmp_omega, tmp_omega_code, "\n")
 
-    if (omega_counter != 0) {
-      omega_counter <- omega_counter - 1
-      if (omega_counter == 0) {
-        f_omega_header <- TRUE
+      if (omega_counter != 0) {
+        omega_counter <- omega_counter - 1
+        if (omega_counter == 0) {
+          f_omega_header <- TRUE
+        }
       }
     }
   }
   mrg_mod$omega <- tmp_omega
 
 
-  tmp_sigma <- tmp_mod[tmp_mod$subroutine == "sig", "code"]
-  tmp_sigma <- apply(tmp_sigma, 1, function(x)gsub("FIX| ", "", x))
-  tmp_sigma <- paste0(tmp_sigma, collapse = "\n")
-  mrg_mod$sigma <- paste0("$SIGMA\n", tmp_sigma, "\n")
+  if(use_final) {
+    tmp_sigma <- get_finalestimate_sigma(mod_name, dir)
+  } else {
+    tmp_sigma <- tmp_mod[tmp_mod$subroutine == "sig", "code"]
+    tmp_sigma <- apply(tmp_sigma, 1, function(x)gsub("FIX| ", "", x))
+    tmp_sigma <- paste0(tmp_sigma, collapse = "\n")
+    tmp_sigma <- paste0("$SIGMA\n", tmp_sigma, "\n")
+  }
+  mrg_mod$sigma <- tmp_sigma
 
 
   tmp_des <- sapply(tmp_mod[tmp_mod$subroutine == "des",]$code, replace_pow_from_string, USE.NAMES = FALSE)
@@ -109,9 +112,9 @@ extract_param <- function(prm_string) {
   extracted_params <- strsplit(extracted_params, ",")
   extracted_params <- unlist(extracted_params)
   extracted_params <- switch(length(extracted_params),
-    "1" = extracted_params[1],
-    "2" = extracted_params[2],
-    "3" = extracted_params[2])
+                             "1" = extracted_params[1],
+                             "2" = extracted_params[2],
+                             "3" = extracted_params[2])
   return(extracted_params)
 }
 
