@@ -3,7 +3,7 @@ get_finalestimate_theta <- function(mod_name, dir) {
   tmp_the <- xpose::get_prm(xpdb, transform = FALSE)
   tmp_the <- tmp_the[tmp_the$type == "the", ]
 
-  theta_header <- "$THETA @annotate\n"
+  theta_header <- "$THETA @annotated\n"
   output <- paste0(tmp_the$value, " : ", tmp_the$label, "\n", collapse = "")
 
   return(paste0(theta_header, output))
@@ -40,9 +40,9 @@ get_finalestimate_omega <- function(mod_name, dir) {
 
     is_block <- group_df$block[1]
     if (is_block) {
-      ome_header <- "$OMEGA @annotated @block\n"
+      ome_header <- "$OMEGA @block\n"
     } else {
-      ome_header <- "$OMEGA @annotated\n"
+      ome_header <- "$OMEGA\n"
     }
 
     m_vals <- unique(group_df$m)
@@ -74,13 +74,8 @@ get_finalestimate_sigma <- function(mod_name, dir) {
   tmp_sig <- xpose::get_prm(xpdb, transform = FALSE)
   tmp_sig <- tmp_sig[tmp_sig$type == "sig", ]
 
-  if (any(tmp_sig$label != "")) {
-    sigma_header <- "$SIGMA @annotate\n"
-    output <- paste0(tmp_sig$value, " : ", tmp_sig$label, "\n", collapse = "")
-  } else {
-    sigma_header <- "$SIGMA\n"
-    output <- paste0(tmp_sig$value, "\n", collapse = "")
-  }
+  sigma_header <- "$SIGMA\n"
+  output <- paste0(tmp_sig$value, "\n", collapse = "")
 
   return(paste0(sigma_header, output))
 }
