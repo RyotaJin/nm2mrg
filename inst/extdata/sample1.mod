@@ -28,6 +28,10 @@ K12 = Q / V1
 K21 = Q / V2
 
 $DES
+IF (T.LE.4) THEN
+  KE = 0
+ENDIF
+
 DADT(1) = - K12 * A(1) + K21 * A(2) - KE * A(1)
 DADT(2) = K12 * A(1) - K21 * A(2)
 

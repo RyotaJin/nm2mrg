@@ -14,7 +14,7 @@ nm2mrg <- function(mod_name, dir = "./") {
 
   mrg_mod <- list()
 
-  mrg_mod$prob <- paste("$PROB", tmp_mod[tmp_mod$subroutine == "pro", "code"], "\n")
+  mrg_mod$prob <- paste0("$PROB ", tmp_mod[tmp_mod$subroutine == "pro", "code"], "\n")
 
 
   mrg_mod$plugin <- "$PLUGIN autodec nm-vars\n"
@@ -46,8 +46,10 @@ nm2mrg <- function(mod_name, dir = "./") {
 
 
   tmp_pk <- sapply(tmp_mod[tmp_mod$subroutine == "pk",]$code, replace_pow_from_string, USE.NAMES = FALSE)
-  tmp_pk <- paste0(tmp_pk, collapse = ";\n")
-  mrg_mod$pk <- paste0("$PK\n", tmp_pk, ";\n")
+  tmp_pk <- sapply(tmp_pk, convert_if_line, USE.NAMES = FALSE)
+  tmp_pk <- sapply(tmp_pk, add_semicolon, USE.NAMES = FALSE)
+  tmp_pk <- paste0(tmp_pk, collapse = "\n")
+  mrg_mod$pk <- paste0("$PK\n", tmp_pk, "\n")
 
 
   tmp_omega <- ""
@@ -86,15 +88,19 @@ nm2mrg <- function(mod_name, dir = "./") {
 
 
   tmp_des <- sapply(tmp_mod[tmp_mod$subroutine == "des",]$code, replace_pow_from_string, USE.NAMES = FALSE)
-  tmp_des <- paste0(tmp_des, collapse = ";\n")
-  mrg_mod$des <- paste0("$DES\n", tmp_des, ";\n")
+  tmp_des <- sapply(tmp_des, convert_if_line, USE.NAMES = FALSE)
+  tmp_des <- sapply(tmp_des, add_semicolon, USE.NAMES = FALSE)
+  tmp_des <- paste0(tmp_des, collapse = "\n")
+  mrg_mod$des <- paste0("$DES\n", tmp_des, "\n")
 
 
   tmp_error <- sapply(tmp_mod[tmp_mod$subroutine == "err",]$code, replace_pow_from_string, USE.NAMES = FALSE)
-  tmp_error <- paste0(tmp_error, collapse = ";\n")
-  mrg_mod$error <- paste0("$ERROR\n", tmp_error, ";\n")
+  tmp_error <- sapply(tmp_error, convert_if_line, USE.NAMES = FALSE)
+  tmp_error <- sapply(tmp_error, add_semicolon, USE.NAMES = FALSE)
+  tmp_error <- paste0(tmp_error, collapse = "\n")
+  mrg_mod$error <- paste0("$ERROR\n", tmp_error, "\n")
 
-  return(paste(mrg_mod, collapse = "\n"))
+  return(paste0(c(mrg_mod, ""), collapse = "\n"))
 }
 
 
@@ -111,6 +117,10 @@ extract_param <- function(prm_string) {
 
 
 replace_pow_from_string <- function(expr_str) {
+  if (grepl("if|else", expr_str, ignore.case = TRUE)) {
+    return(expr_str)
+  }
+
   expr <- parse(text = expr_str)[[1]]
 
   replace_pow <- function(expr) {
@@ -133,4 +143,47 @@ replace_pow_from_string <- function(expr_str) {
   }
 
   paste(deparse(replace_pow(expr)), collapse = "")
+}
+
+
+convert_if_line <- function(line) {
+  line <- convert_operators(line)
+
+  line <- gsub("(?i)\\s*then$", " {", line)
+
+  line <- gsub("(?i)^\\s*if\\s*\\((.*)\\)\\s*\\{?$", "if (\\1) {", line)
+
+  line <- gsub("(?i)^\\s*else if\\s*\\((.*)\\)\\s*\\{?$", "} else if (\\1) {", line)
+
+  line <- gsub("(!?)^else$", "} else {", line)
+
+  line <- gsub("(?i)^endif$", "}", line)
+
+  return(line)
+}
+
+
+convert_operators <- function(line) {
+  line <- gsub("(?i)\\.eq\\.", "==", line)
+
+  line <-  gsub("(?i)\\.ne\\.", "!=", line)
+
+  line <- gsub("(?i)\\.gt\\.", ">", line)
+
+  line <- gsub("(?i)\\.ge\\.", ">=", line)
+
+  line <- gsub("(?i)\\.lt\\.", "<", line)
+
+  line <- gsub("(?i)\\.le\\.", "<=", line)
+
+  return(line)
+}
+
+
+add_semicolon <- function(line) {
+  if (grepl("if|else|\\{|\\}", line, ignore.case = TRUE)) {
+    return(line)
+  } else {
+    return(paste0(line, ";"))
+  }
 }
