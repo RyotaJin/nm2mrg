@@ -149,15 +149,15 @@ replace_pow_from_string <- function(expr_str) {
 convert_if_line <- function(line) {
   line <- convert_operators(line)
 
-  line <- gsub("(?i)\\s*then$", " {", line)
+  line <- gsub("\\s*then$", " {", line, ignore.case = TRUE)
 
-  line <- gsub("(?i)^\\s*if\\s*\\((.*)\\)\\s*\\{?$", "if (\\1) {", line)
+  line <- gsub("^\\s*if\\s*\\((.*)\\)\\s*\\{?$", "if (\\1) {", line, ignore.case = TRUE)
 
-  line <- gsub("(?i)^\\s*else if\\s*\\((.*)\\)\\s*\\{?$", "} else if (\\1) {", line)
+  line <- gsub("^\\s*else if\\s*\\((.*)\\)\\s*\\{?$", "} else if (\\1) {", line, ignore.case = TRUE)
 
-  line <- gsub("(!?)^else$", "} else {", line)
+  line <- gsub("^else$", "} else {", line, ignore.case = TRUE)
 
-  line <- gsub("(?i)^endif$", "}", line)
+  line <- gsub("^endif$", "}", line, ignore.case = TRUE)
 
   return(line)
 }
