@@ -45,3 +45,9 @@ To output as a text file, do the following.
 cat(mrg_model1, file = "run001.cpp")
 cat(mrg_model2, file = "run001_final.cpp")
 ```
+
+You can also launch the Shiny application with the following functions.
+
+``` r
+run_nm2mrg()
+```
