@@ -5,6 +5,7 @@ Version: 0.1.0
 Authors@R: c(
     person(
       "Ryota", "Jin",
+      email = "70737858+RyotaJin@users.noreply.github.com",
       role = c("aut", "cre")
     )
   )
