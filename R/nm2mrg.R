@@ -9,9 +9,8 @@
 #' @return A character string representing the mrgsolve model file content.
 #' @export
 nm2mrg <- function(mod_name, dir = "./", use_final = FALSE) {
-
   tmp_mod <- xpose::read_nm_model(runno = mod_name, prefix = "", dir = dir, ext = ".mod")
-  tmp_mod <- tmp_mod[tmp_mod$code != "",]
+  tmp_mod <- tmp_mod[tmp_mod$code != "", ]
 
   mrg_mod <- list()
 
@@ -23,12 +22,12 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE) {
   mrg_mod$plugin <- "$PLUGIN autodec nm-vars\n"
 
 
-  if(use_final) {
+  if (use_final) {
     tmp_param <- get_finalestimate_theta(mod_name, dir)
   } else {
     tmp_param <- "$THETA @annotated\n"
     for (i in 1:nrow(tmp_mod[tmp_mod$subroutine == "the", ])) {
-      tmp_theta <- tmp_mod[tmp_mod$subroutine == "the", ][i,]
+      tmp_theta <- tmp_mod[tmp_mod$subroutine == "the", ][i, ]
       param <- extract_param(tmp_theta$code)
       param <- paste0(param, " : ", tmp_theta$comment)
       tmp_param <- paste0(tmp_param, param, "\n")
@@ -37,27 +36,27 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE) {
   mrg_mod$param <- tmp_param
 
 
-  tmp_cmt <- apply(tmp_mod[tmp_mod$subroutine == "mod", "code"], 1, function(x)gsub("COMP|=|\\(|\\)| ", "", x))
+  tmp_cmt <- apply(tmp_mod[tmp_mod$subroutine == "mod", "code"], 1, function(x) gsub("COMP|=|\\(|\\)| ", "", x))
   tmp_cmt <- paste(tmp_cmt, collapse = "\n")
   mrg_mod$cmt <- paste0("$CMT\n", tmp_cmt, "\n")
 
 
-  tmp_pk <- sapply(tmp_mod[tmp_mod$subroutine == "pk",]$code, replace_pow_from_string, USE.NAMES = FALSE)
+  tmp_pk <- sapply(tmp_mod[tmp_mod$subroutine == "pk", ]$code, replace_pow_from_string, USE.NAMES = FALSE)
   tmp_pk <- sapply(tmp_pk, convert_if_line, USE.NAMES = FALSE)
   tmp_pk <- sapply(tmp_pk, add_semicolon, USE.NAMES = FALSE)
   tmp_pk <- paste0(tmp_pk, collapse = "\n")
   mrg_mod$pk <- paste0("$PK\n", tmp_pk, "\n")
 
 
-  if(use_final) {
+  if (use_final) {
     tmp_omega <- get_finalestimate_omega(mod_name, dir)
   } else {
     tmp_omega <- ""
     omega_counter <- 0
     f_omega_header <- TRUE
-    for (i in 1:nrow(tmp_mod[tmp_mod$subroutine == "ome",])) {
-      tmp_omega_code <- tmp_mod[tmp_mod$subroutine == "ome", "code"][i,]
-      if (grepl("BLOCK", tmp_omega_code)){
+    for (i in 1:nrow(tmp_mod[tmp_mod$subroutine == "ome", ])) {
+      tmp_omega_code <- tmp_mod[tmp_mod$subroutine == "ome", "code"][i, ]
+      if (grepl("BLOCK", tmp_omega_code)) {
         omega_counter <- gsub("BLOCK|\\(|\\)", "", tmp_omega_code)
         omega_counter <- as.numeric(omega_counter)
         tmp_omega <- paste0(tmp_omega, "$OMEGA @block\n")
@@ -82,25 +81,25 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE) {
   mrg_mod$omega <- tmp_omega
 
 
-  if(use_final) {
+  if (use_final) {
     tmp_sigma <- get_finalestimate_sigma(mod_name, dir)
   } else {
     tmp_sigma <- tmp_mod[tmp_mod$subroutine == "sig", "code"]
-    tmp_sigma <- apply(tmp_sigma, 1, function(x)gsub("FIX| ", "", x))
+    tmp_sigma <- apply(tmp_sigma, 1, function(x) gsub("FIX| ", "", x))
     tmp_sigma <- paste0(tmp_sigma, collapse = "\n")
     tmp_sigma <- paste0("$SIGMA\n", tmp_sigma, "\n")
   }
   mrg_mod$sigma <- tmp_sigma
 
 
-  tmp_des <- sapply(tmp_mod[tmp_mod$subroutine == "des",]$code, replace_pow_from_string, USE.NAMES = FALSE)
+  tmp_des <- sapply(tmp_mod[tmp_mod$subroutine == "des", ]$code, replace_pow_from_string, USE.NAMES = FALSE)
   tmp_des <- sapply(tmp_des, convert_if_line, USE.NAMES = FALSE)
   tmp_des <- sapply(tmp_des, add_semicolon, USE.NAMES = FALSE)
   tmp_des <- paste0(tmp_des, collapse = "\n")
   mrg_mod$des <- paste0("$DES\n", tmp_des, "\n")
 
 
-  tmp_error <- sapply(tmp_mod[tmp_mod$subroutine == "err",]$code, replace_pow_from_string, USE.NAMES = FALSE)
+  tmp_error <- sapply(tmp_mod[tmp_mod$subroutine == "err", ]$code, replace_pow_from_string, USE.NAMES = FALSE)
   tmp_error <- sapply(tmp_error, convert_if_line, USE.NAMES = FALSE)
   tmp_error <- sapply(tmp_error, add_semicolon, USE.NAMES = FALSE)
   tmp_error <- paste0(tmp_error, collapse = "\n")
@@ -115,9 +114,10 @@ extract_param <- function(prm_string) {
   extracted_params <- strsplit(extracted_params, ",")
   extracted_params <- unlist(extracted_params)
   extracted_params <- switch(length(extracted_params),
-                             "1" = extracted_params[1],
-                             "2" = extracted_params[2],
-                             "3" = extracted_params[2])
+    "1" = extracted_params[1],
+    "2" = extracted_params[2],
+    "3" = extracted_params[2]
+  )
   return(extracted_params)
 }
 
@@ -172,7 +172,7 @@ convert_if_line <- function(line) {
 convert_operators <- function(line) {
   line <- gsub("(?i)\\.eq\\.", "==", line)
 
-  line <-  gsub("(?i)\\.ne\\.", "!=", line)
+  line <- gsub("(?i)\\.ne\\.", "!=", line)
 
   line <- gsub("(?i)\\.gt\\.", ">", line)
 
