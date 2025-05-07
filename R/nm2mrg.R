@@ -15,7 +15,9 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE) {
 
   mrg_mod <- list()
 
-  mrg_mod$prob <- paste0("$PROB ", tmp_mod[tmp_mod$subroutine == "pro", "code"], "\n")
+  tmp_prob <- tmp_mod[tmp_mod$subroutine == "pro", "code"]
+  tmp_prob <- ifelse(nrow(tmp_prob) == 0, "", tmp_prob)
+  mrg_mod$prob <- paste0("$PROB ", tmp_prob, "\n")
 
 
   mrg_mod$plugin <- "$PLUGIN autodec nm-vars\n"
