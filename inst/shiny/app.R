@@ -99,7 +99,11 @@ server <- function(input, output, session) {
   output$download <- downloadHandler(
     filename = function() {
       req(conversion_complelte())
-      paste0(gsub("\\..+$", "", input$modFile$name), ".cpp")
+      if (is.null(input$modFile$name)) {
+        paste0(gsub("\\..+$", "", input$modFile2$name[1]), ".cpp")
+      } else {
+        paste0(gsub("\\..+$", "", input$modFile$name), ".cpp")
+      }
     },
     content = function(file) {
       req(conversion_complelte())
