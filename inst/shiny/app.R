@@ -47,7 +47,8 @@ server <- function(input, output, session) {
       file.rename(input$modFile$datapath, paste0(dirname(input$modFile$datapath), "/", input$modFile$name))
       output <- nm2mrg(
         mod_name = gsub("\\..+$", "", input$modFile$name),
-        dir = dirname(input$modFile$datapath)
+        dir = dirname(input$modFile$datapath),
+        add_CAPTURE = input$addcap
       )
     } else if (!is.null(input$modFile2)) {
       if (length(unique(gsub("\\..+$", "", input$modFile2$name))) != 1) {
