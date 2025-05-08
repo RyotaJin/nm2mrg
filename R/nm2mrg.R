@@ -8,7 +8,7 @@
 #'
 #' @return A character string representing the mrgsolve model file content.
 #' @export
-nm2mrg <- function(mod_name, dir = "./", use_final = FALSE) {
+nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, add_CAPTURE = TRUE) {
   tmp_mod <- xpose::read_nm_model(runno = mod_name, prefix = "", dir = dir, ext = ".mod")
   tmp_mod <- tmp_mod[tmp_mod$code != "", ]
 
@@ -105,6 +105,10 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE) {
   tmp_error <- sapply(tmp_error, add_semicolon, USE.NAMES = FALSE)
   tmp_error <- paste0(tmp_error, collapse = "\n")
   mrg_mod$error <- paste0("$ERROR\n", tmp_error, "\n")
+
+  if (add_CAPTURE) {
+    mrg_mod$capt <- "$CAPTURE\n"
+  }
 
   return(paste0(c(mrg_mod, ""), collapse = "\n"))
 }
