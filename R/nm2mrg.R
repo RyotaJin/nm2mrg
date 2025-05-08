@@ -56,6 +56,7 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE) {
     f_omega_header <- TRUE
     for (i in 1:nrow(tmp_mod[tmp_mod$subroutine == "ome", ])) {
       tmp_omega_code <- tmp_mod[tmp_mod$subroutine == "ome", "code"][i, ]
+      tmp_omega_code <- apply(tmp_omega_code, 1, function(x) gsub("FIX", "", x))
       if (grepl("BLOCK", tmp_omega_code)) {
         omega_counter <- gsub("BLOCK|\\(|\\)", "", tmp_omega_code)
         omega_counter <- as.numeric(omega_counter)
