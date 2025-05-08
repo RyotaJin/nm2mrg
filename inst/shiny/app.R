@@ -9,6 +9,7 @@ ui <- fluidPage(
     sidebarPanel(
       fileInput("modFile", "Convert .mod with initial parameters", accept = c(".mod", ".ctl")),
       fileInput("modFile2", "Convert .mod with final estimates (.ext, .lst)", accept = c(".mod", ".ctl", ".ext", ".lst"), multiple = TRUE),
+      checkboxInput("addcap", "Add $CAPTURE", TRUE),
       actionButton("convert", "Convert"),
       htmlOutput("html")
     ),
@@ -75,7 +76,8 @@ server <- function(input, output, session) {
       output <- nm2mrg(
         mod_name = gsub("\\..+$", "", input$modFile2$name[1]),
         dir = dirname(input$modFile2$datapath[1]),
-        use_final = TRUE
+        use_final = TRUE,
+        add_CAPTURE = input$addcap
       )
     }
 
