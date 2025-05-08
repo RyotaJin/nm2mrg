@@ -5,16 +5,13 @@ library(shinyalert)
 
 ui <- fluidPage(
   titlePanel("nm2mrg"),
-
   sidebarLayout(
     sidebarPanel(
       fileInput("modFile", "Convert .mod with initial parameters", accept = c(".mod", ".ctl")),
-
       fileInput("modFile2", "Convert .mod with final estimates (.ext, .lst)", accept = c(".mod", ".ctl", ".ext", ".lst"), multiple = TRUE),
       actionButton("convert", "Convert"),
       htmlOutput("html")
     ),
-
     mainPanel(
       textAreaInput("text", "Output editor", row = 40, width = "100%")
     )
@@ -27,7 +24,7 @@ server <- function(input, output, session) {
   conversion_complelte <- reactiveVal(FALSE)
 
   observeEvent(input$convert, {
-    if(!is.null(input$modFile) & !is.null(input$modFile2)) {
+    if (!is.null(input$modFile) & !is.null(input$modFile2)) {
       shinyalert::shinyalert(
         title = "Error",
         text = "Please use only one option.",
@@ -36,7 +33,7 @@ server <- function(input, output, session) {
       return()
     }
 
-    if(is.null(input$modFile) & is.null(input$modFile2)) {
+    if (is.null(input$modFile) & is.null(input$modFile2)) {
       shinyalert::shinyalert(
         title = "Error",
         text = "Please upload some files.",
@@ -45,12 +42,14 @@ server <- function(input, output, session) {
       return()
     }
 
-    if(!is.null(input$modFile)) {
+    if (!is.null(input$modFile)) {
       file.rename(input$modFile$datapath, paste0(dirname(input$modFile$datapath), "/", input$modFile$name))
-      output <- nm2mrg(mod_name = gsub("\\..+$", "", input$modFile$name),
-                       dir = dirname(input$modFile$datapath))
-    } else if(!is.null(input$modFile2)) {
-      if(length(unique(gsub("\\..+$", "", input$modFile2$name))) != 1) {
+      output <- nm2mrg(
+        mod_name = gsub("\\..+$", "", input$modFile$name),
+        dir = dirname(input$modFile$datapath)
+      )
+    } else if (!is.null(input$modFile2)) {
+      if (length(unique(gsub("\\..+$", "", input$modFile2$name))) != 1) {
         shinyalert::shinyalert(
           title = "Error",
           text = "Please upload files with the same name.",
@@ -58,7 +57,7 @@ server <- function(input, output, session) {
         )
         return()
       }
-      if(nrow(input$modFile2) != 3) {
+      if (nrow(input$modFile2) != 3) {
         shinyalert::shinyalert(
           title = "Error",
           text = "Please upload 3 files (.mod, .ext, .lst).",
@@ -67,13 +66,17 @@ server <- function(input, output, session) {
         return()
       }
 
-      for(i in 1:nrow(input$modFile2)) {
-        file.rename(input$modFile2$datapath[i],
-                    paste0(dirname(input$modFile2$datapath[i]), "/", input$modFile2$name[i]))
+      for (i in 1:nrow(input$modFile2)) {
+        file.rename(
+          input$modFile2$datapath[i],
+          paste0(dirname(input$modFile2$datapath[i]), "/", input$modFile2$name[i])
+        )
       }
-      output <- nm2mrg(mod_name = gsub("\\..+$", "", input$modFile2$name[1]),
-                       dir = dirname(input$modFile2$datapath[1]),
-                       use_final = TRUE)
+      output <- nm2mrg(
+        mod_name = gsub("\\..+$", "", input$modFile2$name[1]),
+        dir = dirname(input$modFile2$datapath[1]),
+        use_final = TRUE
+      )
     }
 
 
