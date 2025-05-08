@@ -44,7 +44,11 @@ server <- function(input, output, session) {
     }
 
     if (!is.null(input$modFile)) {
-      file.rename(input$modFile$datapath, paste0(dirname(input$modFile$datapath), "/", input$modFile$name))
+      tmp_dir <- dirname(input$modFile$datapath)
+      tmp_name <- input$modFile$name
+      if (!file.exists(paste0(tmp_dir, "/", tmp_name))) {
+        file.rename(input$modFile$datapath, paste0(tmp_dir, "/", tmp_name))
+      }
       output <- nm2mrg(
         mod_name = gsub("\\..+$", "", input$modFile$name),
         dir = dirname(input$modFile$datapath),
@@ -69,10 +73,11 @@ server <- function(input, output, session) {
       }
 
       for (i in 1:nrow(input$modFile2)) {
-        file.rename(
-          input$modFile2$datapath[i],
-          paste0(dirname(input$modFile2$datapath[i]), "/", input$modFile2$name[i])
-        )
+        tmp_dir <- dirname(input$modFile2$datapath[i])
+        tmp_name <- input$modFile2$name[i]
+        if (!file.exists(paste0(tmp_dir, "/", tmp_name))) {
+          file.rename(input$modFile2$datapath[i], paste0(tmp_dir, "/", tmp_name))
+        }
       }
       output <- nm2mrg(
         mod_name = gsub("\\..+$", "", input$modFile2$name[1]),
