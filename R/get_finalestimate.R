@@ -53,11 +53,7 @@ get_finalestimate_omega <- function(mod_name, dir) {
       row_df <- row_df[order(row_df$n), ]
 
       value_str <- paste(row_df$value, collapse = " ")
-      label_val <- row_df$label[row_df$n == m_val]
-      if (length(label_val) == 0 || is.na(label_val) || label_val == "") {
-        label_val <- "-"
-      }
-      line <- paste0(value_str, " : ", label_val, "\n")
+      line <- paste0(value_str, "\n")
       lines <- c(lines, line)
     }
 
