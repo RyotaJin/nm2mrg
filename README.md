@@ -46,6 +46,17 @@ cat(mrg_model1, file = "run001.cpp")
 cat(mrg_model2, file = "run001_final.cpp")
 ```
 
+The output of the nm2mrg function can be directly used as mrgsolve::mcode input without any modification.
+
+``` r
+mod_code <- nm2mrg::nm2mrg(
+  mod_name = "run001",
+  dir = "root/"
+)
+
+mod <- mrgsolve::mcode("run001", mod_code)
+```
+
 You can also launch the Shiny application with the following functions.
 
 ``` r
