@@ -29,6 +29,7 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, commentout_ERROR = T
     for (i in 1:nrow(tmp_mod[tmp_mod$subroutine == "the", ])) {
       tmp_theta <- tmp_mod[tmp_mod$subroutine == "the", ][i, ]
       param <- extract_param(tmp_theta$code)
+      param <- gsub("FIX|FIXED", "", param)
       param <- paste0(param, " : ", tmp_theta$comment)
       tmp_param <- paste0(tmp_param, param, "\n")
     }
@@ -56,7 +57,7 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, commentout_ERROR = T
     f_omega_header <- TRUE
     for (i in 1:nrow(tmp_mod[tmp_mod$subroutine == "ome", ])) {
       tmp_omega_code <- tmp_mod[tmp_mod$subroutine == "ome", "code"][i, ]
-      tmp_omega_code <- apply(tmp_omega_code, 1, function(x) gsub("FIX", "", x))
+      tmp_omega_code <- apply(tmp_omega_code, 1, function(x) gsub("FIX|FIXED", "", x))
       if (grepl("BLOCK", tmp_omega_code)) {
         omega_counter <- gsub("BLOCK|\\(|\\)", "", tmp_omega_code)
         omega_counter <- as.numeric(omega_counter)
@@ -86,7 +87,7 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, commentout_ERROR = T
     tmp_sigma <- get_finalestimate_sigma(mod_name, dir)
   } else {
     tmp_sigma <- tmp_mod[tmp_mod$subroutine == "sig", "code"]
-    tmp_sigma <- apply(tmp_sigma, 1, function(x) gsub("FIX| ", "", x))
+    tmp_sigma <- apply(tmp_sigma, 1, function(x) gsub("FIX|FIXED| ", "", x))
     tmp_sigma <- paste0(tmp_sigma, collapse = "\n")
     tmp_sigma <- paste0("$SIGMA\n", tmp_sigma, "\n")
   }
