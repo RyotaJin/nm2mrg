@@ -90,6 +90,13 @@ server <- function(input, output, session) {
       )
     }
 
+    if (grepl("\\$PARAM", output)) {
+      shinyalert::shinyalert(
+        title = "Warning",
+        text = "Some covariates were detected. The initial value is set to 1 by default. Please update it as needed.",
+        type = "warning"
+      )
+    }
 
     text_content(output)
     updateTextAreaInput(session, "text", value = paste(text_content(), collapse = "\n"))

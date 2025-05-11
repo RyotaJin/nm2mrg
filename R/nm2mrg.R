@@ -37,6 +37,14 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, commentout_ERROR = T
   mrg_mod$theta <- tmp_theta
 
 
+  tmp_cov <- extract_covariates_from_df(tmp_mod[tmp_mod$subroutine == "pk", ])
+  if (length(tmp_cov) > 0) {
+    warning("Some covariates were detected. The initial value is set to 1 by default. Please update it as needed.")
+    tmp_cov <- paste0(tmp_cov, " = 1\n")
+    tmp_cov <- paste0(tmp_cov, collapse = "")
+    mrg_mod$cov <- paste0("$PARAM @covariates\n", tmp_cov)
+  }
+
   tmp_cmt <- apply(tmp_mod[tmp_mod$subroutine == "mod", "code"], 1, function(x) gsub("COMP|=|\\(|\\)| ", "", x))
   tmp_cmt <- paste(tmp_cmt, collapse = "\n")
   mrg_mod$cmt <- paste0("$CMT\n", tmp_cmt, "\n")
@@ -128,6 +136,30 @@ extract_param <- function(prm_string) {
     "3" = extracted_params[2]
   )
   return(extracted_params)
+}
+
+
+extract_covariates_from_df <- function(df) {
+  code_lines <- df$code
+
+  full_text <- paste(code_lines, collapse = "\n")
+
+  assign_lines <- grep("<-|=", code_lines, value = TRUE)
+
+  lhs_vars <- gsub("([<]{1}-|=).*", "", assign_lines)
+  lhs_vars <- trimws(lhs_vars)
+
+  rhs_vars <- unlist(regmatches(full_text, gregexpr("\\b[A-Za-z_][A-Za-z0-9_]*\\b", full_text)))
+
+  covariates <- setdiff(rhs_vars, lhs_vars)
+
+  keywords <- c("THETA", "ETA", "EXP", "LOG", "SQRT", "ABS", "SIN", "COS",
+                "IF", "THEN", "ELSE", "ENDIF", "T", "AND", "OR",
+                "EQ", "NE", "LE", "LT", "GE", "GT")
+  covariates <- covariates[!covariates %in% keywords]
+  covariates <- covariates[!grepl("^[0-9.]+$", covariates)]
+
+  return(sort(unique(covariates)))
 }
 
 
