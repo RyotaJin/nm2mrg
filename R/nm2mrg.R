@@ -23,18 +23,18 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, commentout_ERROR = T
 
 
   if (use_final) {
-    tmp_param <- get_finalestimate_theta(mod_name, dir)
+    tmp_theta <- get_finalestimate_theta(mod_name, dir)
   } else {
-    tmp_param <- "$THETA @annotated\n"
+    tmp_theta <- "$THETA @annotated\n"
     for (i in 1:nrow(tmp_mod[tmp_mod$subroutine == "the", ])) {
-      tmp_theta <- tmp_mod[tmp_mod$subroutine == "the", ][i, ]
-      param <- extract_param(tmp_theta$code)
-      param <- gsub("FIX|FIXED", "", param)
-      param <- paste0(param, " : ", tmp_theta$comment)
-      tmp_param <- paste0(tmp_param, param, "\n")
+      tmp_theta_row <- tmp_mod[tmp_mod$subroutine == "the", ][i, ]
+      theta <- extract_param(tmp_theta_row$code)
+      theta <- gsub("FIX|FIXED", "", theta)
+      theta <- paste0(theta, " : ", tmp_theta_row$comment)
+      tmp_theta <- paste0(tmp_theta, theta, "\n")
     }
   }
-  mrg_mod$param <- tmp_param
+  mrg_mod$theta <- tmp_theta
 
 
   tmp_cmt <- apply(tmp_mod[tmp_mod$subroutine == "mod", "code"], 1, function(x) gsub("COMP|=|\\(|\\)| ", "", x))
