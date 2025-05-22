@@ -3,6 +3,10 @@ test_that("correct", {
 })
 
 test_that("correct", {
+  expect_equal(convert_if_line("IF (T.GE.3) CL = 0"), "if (T>=3) CL = 0")
+})
+
+test_that("correct", {
   expect_equal(convert_if_line("ELSE IF (t<=4) then"), "} else if (t<=4) {")
 })
 

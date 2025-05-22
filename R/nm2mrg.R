@@ -196,9 +196,9 @@ replace_pow_from_string <- function(expr_str) {
 convert_if_line <- function(line) {
   line <- convert_operators(line)
 
-  line <- gsub("\\s*then$", " {", line, ignore.case = TRUE)
+  line <- gsub("^\\s*if\\s*\\((.*)\\)(.*)?$", "if (\\1)\\2", line, ignore.case = TRUE)
 
-  line <- gsub("^\\s*if\\s*\\((.*)\\)\\s*\\{?$", "if (\\1) {", line, ignore.case = TRUE)
+  line <- gsub("\\s*then$", " {", line, ignore.case = TRUE)
 
   line <- gsub("^\\s*else if\\s*\\((.*)\\)\\s*\\{?$", "} else if (\\1) {", line, ignore.case = TRUE)
 
