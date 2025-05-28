@@ -25,6 +25,8 @@ V2 = TVV2 * EXP(ETA(4));
 KE = CL/V1;
 K12 = Q/V1;
 K21 = Q/V2;
+A_0(1) = 0;
+A_0(2) = 0;
 
 $OMEGA @block
 0.1
