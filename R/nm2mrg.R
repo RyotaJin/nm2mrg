@@ -37,10 +37,10 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, commentout_ERROR = T
   mrg_mod$theta <- tmp_theta
 
 
-  tmp_cov <- extract_undefined_variable(tmp_mod[tmp_mod$subroutine %in% c("pk", "des"), ]$code)
-  if (length(tmp_cov) > 0) {
+  tmp_cov_names <- extract_undefined_variable(tmp_mod[tmp_mod$subroutine %in% c("pk", "des"), ]$code)
+  if (length(tmp_cov_names) > 0) {
     warning("Some covariates were detected. The initial value is set to 1 by default. Please update it as needed.")
-    tmp_cov <- paste0(tmp_cov, " = 1\n")
+    tmp_cov <- paste0(tmp_cov_names, " = 1\n")
     tmp_cov <- paste0(tmp_cov, collapse = "")
     mrg_mod$cov <- paste0("$PARAM @covariates\n", tmp_cov)
   }
@@ -119,7 +119,11 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, commentout_ERROR = T
   mrg_mod$error <- paste0("$ERROR\n", tmp_error, "\n")
 
   if (add_CAPTURE) {
-    mrg_mod$capt <- "$CAPTURE\n"
+    tmp_capt <- "$CAPTURE\nEVID CMT AMT"
+    if (length(tmp_cov_names) > 0) {
+      tmp_capt <- paste(c(tmp_capt, tmp_cov_names), collapse = " ")
+    }
+    mrg_mod$capt <- tmp_capt
   }
 
   return(paste0(c(mrg_mod, ""), collapse = "\n"))
