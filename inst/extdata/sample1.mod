@@ -27,8 +27,11 @@ KE = CL / V1
 K12 = Q / V1
 K21 = Q / V2
 
+A_0(1) = 0
+A_0(2) = 0
+
 $DES
-IF (T.LE.4) THEN
+IF (T<=4) THEN
   KE = 0
 ENDIF
 
