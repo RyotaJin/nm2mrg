@@ -150,9 +150,9 @@ extract_undefined_variable <- function(code_lines) {
 
   rhs_vars <- setdiff(all_vars, lhs_vars)
 
-  reserved_vars <- c("THETA", "ETA", "EXP", "LOG", "SQRT", "ABS", "SIN", "COS",
+  reserved_vars <- c("THETA", "ETA", "EPS", "EXP", "LOG", "SQRT", "ABS", "SIN", "COS",
                       "IF", "THEN", "ELSE", "ENDIF", "T", "AND", "OR",
-                      "EQ", "NE", "LE", "LT", "GE", "GT", "A", "DADT", "A_0")
+                      "EQ", "NE", "LE", "LT", "GE", "GT", "A", "DADT", "A_0", "DV")
   undefined_vars <- setdiff(rhs_vars, reserved_vars)
 
   undefined_vars <- undefined_vars[!grepl("^F[0-9.]+$", undefined_vars)]
