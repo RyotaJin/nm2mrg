@@ -46,10 +46,10 @@ DADT(1) = -K12 * A(1) + K21 * A(2) - KE * A(1);
 DADT(2) = K12 * A(1) - K21 * A(2);
 
 $ERROR
-// IPRED = A(1)/V1;
-// W = THETA(5);
-// Y = IPRED * (1 + W * EPS(1));
+IPRED = A(1)/V1;
+W = THETA(5);
+Y = IPRED * (1 + W * EPS(1));
 // IWRES = (DV - IPRED)/(IPRED * W);
 
 $CAPTURE
-EVID CMT AMT
+EVID CMT AMT IPRED W Y
