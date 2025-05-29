@@ -149,6 +149,7 @@ extract_lefthand_variables <- function(code_lines) {
   assign_lines <- grep("(?<![=!<>])=(?![=])", code_lines, value = TRUE, perl = TRUE)
   lhs_vars <- gsub("=.*", "", assign_lines)
   lhs_vars <- trimws(lhs_vars)
+  lhs_vars <- unique(lhs_vars)
   return(lhs_vars)
 }
 

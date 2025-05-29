@@ -46,6 +46,10 @@ DADT(2) = K12 * A(1) - K21 * A(2)
 $ERROR
 IPRED = A(1) / V1
 
+IF (AGE.GE.40) THEN
+  IPRED = IPRED * 2
+ENDIF
+
 W = THETA(5)
 
 Y = IPRED * (1 + W * EPS(1))
