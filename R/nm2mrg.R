@@ -37,7 +37,7 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, add_CAPTURE = TRUE) 
   mrg_mod$theta <- tmp_theta
 
 
-  tmp_cov_names <- extract_undefined_variable(tmp_mod[tmp_mod$subroutine %in% c("pk", "des"), ]$code)
+  tmp_cov_names <- extract_undefined_variable(tmp_mod[tmp_mod$subroutine %in% c("pk", "des", "err"), ]$code)
   if (length(tmp_cov_names) > 0) {
     warning("Some covariates were detected. The initial value is set to 1 by default. Please update it as needed.")
     tmp_cov <- paste0(tmp_cov_names, " = 1\n")
@@ -110,6 +110,8 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, add_CAPTURE = TRUE) 
 
 
   tmp_error <- sapply(tmp_mod[tmp_mod$subroutine == "err", ]$code, replace_pow_from_string, USE.NAMES = FALSE)
+  tmp_error <- sapply(tmp_error, function(x) ifelse("DV" %in% extract_all_variables(x), paste("//", x), x), USE.NAMES = FALSE)
+  error_lhs <- extract_lefthand_variables(tmp_error[!grepl("^//", tmp_error)])
   tmp_error <- sapply(tmp_error, convert_if_line, USE.NAMES = FALSE)
   tmp_error <- sapply(tmp_error, add_semicolon, USE.NAMES = FALSE)
   tmp_error <- paste0(tmp_error, collapse = "\n")
@@ -119,6 +121,9 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, add_CAPTURE = TRUE) 
     tmp_capt <- "$CAPTURE\nEVID CMT AMT"
     if (length(tmp_cov_names) > 0) {
       tmp_capt <- paste(c(tmp_capt, tmp_cov_names), collapse = " ")
+    }
+    if (length(error_lhs) > 0) {
+      tmp_capt <- paste(c(tmp_capt, error_lhs), collapse = " ")
     }
     mrg_mod$capt <- tmp_capt
   }
@@ -140,13 +145,25 @@ extract_param <- function(prm_string) {
 }
 
 
-extract_undefined_variable <- function(code_lines) {
+extract_lefthand_variables <- function(code_lines) {
   assign_lines <- grep("(?<![=!<>])=(?![=])", code_lines, value = TRUE, perl = TRUE)
   lhs_vars <- gsub("=.*", "", assign_lines)
   lhs_vars <- trimws(lhs_vars)
+  return(lhs_vars)
+}
 
+
+extract_all_variables <- function(code_lines) {
   full_text <- paste(code_lines, collapse = "\n")
   all_vars <- unlist(regmatches(full_text, gregexpr("\\b[A-Za-z_][A-Za-z0-9_]*\\b", full_text)))
+  return(all_vars)
+}
+
+
+extract_undefined_variable <- function(code_lines) {
+  lhs_vars <- extract_lefthand_variables(code_lines)
+
+  all_vars <- extract_all_variables(code_lines)
 
   rhs_vars <- setdiff(all_vars, lhs_vars)
 
