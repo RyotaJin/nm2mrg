@@ -13,8 +13,9 @@ $THETA @annotated
 0.5 : V1WT [-]
 
 $PARAM @covariates
-SEX = 1
 WT = 1
+SEX = 1
+AGE = 1
 
 $CMT
 CENTRAL
@@ -58,10 +59,13 @@ DADT(1) = -K12 * A(1) + K21 * A(2) - KE * A(1);
 DADT(2) = K12 * A(1) - K21 * A(2);
 
 $ERROR
-// IPRED = A(1)/V1;
-// W = THETA(5);
-// Y = IPRED * (1 + W * EPS(1));
+IPRED = A(1)/V1;
+if (AGE>=40) {
+IPRED = IPRED * 2;
+}
+W = THETA(5);
+Y = IPRED * (1 + W * EPS(1));
 // IWRES = (DV - IPRED)/(IPRED * W);
 
 $CAPTURE
-EVID CMT AMT SEX WT
+EVID CMT AMT WT SEX AGE IPRED W Y

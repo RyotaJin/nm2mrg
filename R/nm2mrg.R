@@ -8,7 +8,7 @@
 #'
 #' @return A character string representing the mrgsolve model file content.
 #' @export
-nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, commentout_ERROR = TRUE, add_CAPTURE = TRUE) {
+nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, add_CAPTURE = TRUE) {
   tmp_mod <- xpose::read_nm_model(runno = mod_name, prefix = "", dir = dir, ext = ".mod")
   tmp_mod <- tmp_mod[tmp_mod$code != "", ]
 
@@ -37,7 +37,7 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, commentout_ERROR = T
   mrg_mod$theta <- tmp_theta
 
 
-  tmp_cov_names <- extract_undefined_variable(tmp_mod[tmp_mod$subroutine %in% c("pk", "des"), ]$code)
+  tmp_cov_names <- extract_undefined_variable(tmp_mod[tmp_mod$subroutine %in% c("pk", "des", "err"), ]$code)
   if (length(tmp_cov_names) > 0) {
     warning("Some covariates were detected. The initial value is set to 1 by default. Please update it as needed.")
     tmp_cov <- paste0(tmp_cov_names, " = 1\n")
@@ -110,11 +110,10 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, commentout_ERROR = T
 
 
   tmp_error <- sapply(tmp_mod[tmp_mod$subroutine == "err", ]$code, replace_pow_from_string, USE.NAMES = FALSE)
+  tmp_error <- sapply(tmp_error, function(x) ifelse("DV" %in% extract_all_variables(x), paste("//", x), x), USE.NAMES = FALSE)
+  error_lhs <- extract_lefthand_variables(tmp_error[!grepl("^//", tmp_error)])
   tmp_error <- sapply(tmp_error, convert_if_line, USE.NAMES = FALSE)
   tmp_error <- sapply(tmp_error, add_semicolon, USE.NAMES = FALSE)
-  if (commentout_ERROR) {
-    tmp_error <- paste("//", tmp_error)
-  }
   tmp_error <- paste0(tmp_error, collapse = "\n")
   mrg_mod$error <- paste0("$ERROR\n", tmp_error, "\n")
 
@@ -122,6 +121,9 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, commentout_ERROR = T
     tmp_capt <- "$CAPTURE\nEVID CMT AMT"
     if (length(tmp_cov_names) > 0) {
       tmp_capt <- paste(c(tmp_capt, tmp_cov_names), collapse = " ")
+    }
+    if (length(error_lhs) > 0) {
+      tmp_capt <- paste(c(tmp_capt, error_lhs), collapse = " ")
     }
     mrg_mod$capt <- tmp_capt
   }
@@ -143,22 +145,34 @@ extract_param <- function(prm_string) {
 }
 
 
-extract_undefined_variable <- function(code_lines) {
+extract_lefthand_variables <- function(code_lines) {
   assign_lines <- grep("(?<![=!<>])=(?![=])", code_lines, value = TRUE, perl = TRUE)
   lhs_vars <- gsub("=.*", "", assign_lines)
   lhs_vars <- trimws(lhs_vars)
+  lhs_vars <- unique(lhs_vars)
+  return(lhs_vars)
+}
 
+
+extract_all_variables <- function(code_lines) {
   full_text <- paste(code_lines, collapse = "\n")
   all_vars <- unlist(regmatches(full_text, gregexpr("\\b[A-Za-z_][A-Za-z0-9_]*\\b", full_text)))
+  return(all_vars)
+}
+
+
+extract_undefined_variable <- function(code_lines) {
+  lhs_vars <- extract_lefthand_variables(code_lines)
+
+  all_vars <- extract_all_variables(code_lines)
 
   rhs_vars <- setdiff(all_vars, lhs_vars)
 
-  reserved_vars <- c("THETA", "ETA", "EXP", "LOG", "SQRT", "ABS", "SIN", "COS",
+  reserved_vars <- c("THETA", "ETA", "EPS", "EXP", "LOG", "SQRT", "ABS", "SIN", "COS",
                       "IF", "THEN", "ELSE", "ENDIF", "T", "AND", "OR",
-                      "EQ", "NE", "LE", "LT", "GE", "GT", "A", "DADT", "A_0")
+                      "EQ", "NE", "LE", "LT", "GE", "GT", "A", "DADT", "A_0", "DV")
   undefined_vars <- setdiff(rhs_vars, reserved_vars)
 
-  undefined_vars <- undefined_vars[!grepl("^[0-9.]+$", undefined_vars)]
   undefined_vars <- undefined_vars[!grepl("^F[0-9.]+$", undefined_vars)]
   undefined_vars <- undefined_vars[!grepl("^R[0-9.]+$", undefined_vars)]
   undefined_vars <- undefined_vars[!grepl("^S[0-9.]+$", undefined_vars)]
@@ -169,7 +183,7 @@ extract_undefined_variable <- function(code_lines) {
 
 
 replace_pow_from_string <- function(expr_str) {
-  if (grepl("if|else", expr_str, ignore.case = TRUE)) {
+  if (grepl("(?i)if|else", expr_str)) {
     return(expr_str)
   }
 
@@ -201,15 +215,11 @@ replace_pow_from_string <- function(expr_str) {
 convert_if_line <- function(line) {
   line <- convert_operators(line)
 
-  line <- gsub("^\\s*if\\s*\\((.*)\\)(.*)?$", "if (\\1)\\2", line, ignore.case = TRUE)
-
-  line <- gsub("\\s*then$", " {", line, ignore.case = TRUE)
-
-  line <- gsub("^\\s*else if\\s*\\((.*)\\)\\s*\\{?$", "} else if (\\1) {", line, ignore.case = TRUE)
-
-  line <- gsub("^else$", "} else {", line, ignore.case = TRUE)
-
-  line <- gsub("^endif$", "}", line, ignore.case = TRUE)
+  line <- gsub("(?i)^\\s*if\\s*\\((.*)\\)(.*)?$", "if (\\1)\\2", line)
+  line <- gsub("(?i)\\s*then$", " {", line)
+  line <- gsub("(?i)^\\s*else if\\s*\\((.*)\\)\\s*\\{?$", "} else if (\\1) {", line)
+  line <- gsub("(?i)^else$", "} else {", line)
+  line <- gsub("(?i)^endif$", "}", line)
 
   return(line)
 }
@@ -217,15 +227,10 @@ convert_if_line <- function(line) {
 
 convert_operators <- function(line) {
   line <- gsub("(?i)\\.eq\\.", "==", line)
-
   line <- gsub("(?i)\\.ne\\.", "!=", line)
-
   line <- gsub("(?i)\\.gt\\.", ">", line)
-
   line <- gsub("(?i)\\.ge\\.", ">=", line)
-
   line <- gsub("(?i)\\.lt\\.", "<", line)
-
   line <- gsub("(?i)\\.le\\.", "<=", line)
 
   return(line)
@@ -233,7 +238,7 @@ convert_operators <- function(line) {
 
 
 add_semicolon <- function(line) {
-  if (grepl("if|else|\\{|\\}", line, ignore.case = TRUE)) {
+  if (grepl("(?i)if|else|\\{|\\}", line)) {
     return(line)
   } else {
     return(paste0(line, ";"))
