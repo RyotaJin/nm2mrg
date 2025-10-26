@@ -21,6 +21,12 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, add_CAPTURE = TRUE) 
 
   mrg_mod$plugin <- "$PLUGIN autodec nm-vars\n"
 
+  has_pred <- nrow(tmp_mod[tmp_mod$subroutine == "pre", ]) > 0
+
+  # Stop if $PRED co-exists with $PK/$DES/$ERROR
+  if (has_pred && nrow(tmp_mod[tmp_mod$subroutine %in% c("pk", "des", "err"), ]) > 0) {
+    stop("$PRED exists but $PK, $DES, or $ERROR are also present.", call. = FALSE)
+  }
 
   if (use_final) {
     tmp_theta <- get_finalestimate_theta(mod_name, dir)
@@ -37,7 +43,7 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, add_CAPTURE = TRUE) 
   mrg_mod$theta <- tmp_theta
 
 
-  tmp_cov_names <- extract_undefined_variable(tmp_mod[tmp_mod$subroutine %in% c("pk", "des", "err"), ]$code)
+  tmp_cov_names <- extract_undefined_variable(tmp_mod[tmp_mod$subroutine %in% c("pk", "des", "err", "pre"), ]$code)
   if (length(tmp_cov_names) > 0) {
     warning("Some covariates were detected. The initial value is set to 1 by default. Please update it as needed.")
     tmp_cov <- paste0(tmp_cov_names, " = 1\n")
@@ -45,16 +51,20 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, add_CAPTURE = TRUE) 
     mrg_mod$cov <- paste0("$PARAM @covariates\n", tmp_cov)
   }
 
-  tmp_cmt <- apply(tmp_mod[tmp_mod$subroutine == "mod", "code"], 1, function(x) gsub("COMP|=|\\(|\\)| ", "", x))
-  tmp_cmt <- paste(tmp_cmt, collapse = "\n")
-  mrg_mod$cmt <- paste0("$CMT\n", tmp_cmt, "\n")
+  if (!has_pred) {
+    tmp_cmt <- apply(tmp_mod[tmp_mod$subroutine == "mod", "code"], 1, function(x) gsub("COMP|=|\\(|\\)| ", "", x))
+    tmp_cmt <- paste(tmp_cmt, collapse = "\n")
+    mrg_mod$cmt <- paste0("$CMT\n", tmp_cmt, "\n")
+  }
 
 
-  tmp_pk <- sapply(tmp_mod[tmp_mod$subroutine == "pk", ]$code, replace_pow_from_string, USE.NAMES = FALSE)
-  tmp_pk <- sapply(tmp_pk, convert_if_line, USE.NAMES = FALSE)
-  tmp_pk <- sapply(tmp_pk, add_semicolon, USE.NAMES = FALSE)
-  tmp_pk <- paste0(tmp_pk, collapse = "\n")
-  mrg_mod$pk <- paste0("$PK\n", tmp_pk, "\n")
+  if (!has_pred) {
+    tmp_pk <- sapply(tmp_mod[tmp_mod$subroutine == "pk", ]$code, replace_pow_from_string, USE.NAMES = FALSE)
+    tmp_pk <- sapply(tmp_pk, convert_if_line, USE.NAMES = FALSE)
+    tmp_pk <- sapply(tmp_pk, add_semicolon, USE.NAMES = FALSE)
+    tmp_pk <- paste0(tmp_pk, collapse = "\n")
+    mrg_mod$pk <- paste0("$PK\n", tmp_pk, "\n")
+  }
 
 
   if (use_final) {
@@ -102,20 +112,33 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, add_CAPTURE = TRUE) 
   mrg_mod$sigma <- tmp_sigma
 
 
-  tmp_des <- sapply(tmp_mod[tmp_mod$subroutine == "des", ]$code, replace_pow_from_string, USE.NAMES = FALSE)
-  tmp_des <- sapply(tmp_des, convert_if_line, USE.NAMES = FALSE)
-  tmp_des <- sapply(tmp_des, add_semicolon, USE.NAMES = FALSE)
-  tmp_des <- paste0(tmp_des, collapse = "\n")
-  mrg_mod$des <- paste0("$DES\n", tmp_des, "\n")
+  if (!has_pred) {
+    tmp_des <- sapply(tmp_mod[tmp_mod$subroutine == "des", ]$code, replace_pow_from_string, USE.NAMES = FALSE)
+    tmp_des <- sapply(tmp_des, convert_if_line, USE.NAMES = FALSE)
+    tmp_des <- sapply(tmp_des, add_semicolon, USE.NAMES = FALSE)
+    tmp_des <- paste0(tmp_des, collapse = "\n")
+    mrg_mod$des <- paste0("$DES\n", tmp_des, "\n")
+  }
+
+  if (has_pred) {
+    tmp_pred <- sapply(tmp_mod[tmp_mod$subroutine == "pre", ]$code, replace_pow_from_string, USE.NAMES = FALSE)
+    tmp_pred <- sapply(tmp_pred, convert_if_line, USE.NAMES = FALSE)
+    tmp_pred <- sapply(tmp_pred, add_semicolon, USE.NAMES = FALSE)
+    tmp_pred <- paste0(tmp_pred, collapse = "\n")
+    mrg_mod$pred <- paste0("$PRED\n", tmp_pred, "\n")
+  }
 
 
-  tmp_error <- sapply(tmp_mod[tmp_mod$subroutine == "err", ]$code, replace_pow_from_string, USE.NAMES = FALSE)
-  tmp_error <- sapply(tmp_error, function(x) ifelse("DV" %in% extract_all_variables(x), paste("//", x), x), USE.NAMES = FALSE)
-  error_lhs <- extract_lefthand_variables(tmp_error[!grepl("^//", tmp_error)])
-  tmp_error <- sapply(tmp_error, convert_if_line, USE.NAMES = FALSE)
-  tmp_error <- sapply(tmp_error, add_semicolon, USE.NAMES = FALSE)
-  tmp_error <- paste0(tmp_error, collapse = "\n")
-  mrg_mod$error <- paste0("$ERROR\n", tmp_error, "\n")
+  error_lhs <- character(0)
+  if (!has_pred) {
+    tmp_error <- sapply(tmp_mod[tmp_mod$subroutine == "err", ]$code, replace_pow_from_string, USE.NAMES = FALSE)
+    tmp_error <- sapply(tmp_error, function(x) ifelse("DV" %in% extract_all_variables(x), paste("//", x), x), USE.NAMES = FALSE)
+    error_lhs <- extract_lefthand_variables(tmp_error[!grepl("^//", tmp_error)])
+    tmp_error <- sapply(tmp_error, convert_if_line, USE.NAMES = FALSE)
+    tmp_error <- sapply(tmp_error, add_semicolon, USE.NAMES = FALSE)
+    tmp_error <- paste0(tmp_error, collapse = "\n")
+    mrg_mod$error <- paste0("$ERROR\n", tmp_error, "\n")
+  }
 
   if (add_CAPTURE) {
     tmp_capt <- "$CAPTURE\nEVID CMT AMT"
