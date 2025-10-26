@@ -4,6 +4,7 @@ library(shinyalert)
 
 
 ui <- fluidPage(
+  shinyalert::useShinyalert(),
   titlePanel("nm2mrg"),
   sidebarLayout(
     sidebarPanel(
@@ -49,11 +50,33 @@ server <- function(input, output, session) {
       if (!file.exists(paste0(tmp_dir, "/", tmp_name))) {
         file.rename(input$modFile$datapath, paste0(tmp_dir, "/", tmp_name))
       }
-      output <- nm2mrg(
-        mod_name = gsub("\\..+$", "", input$modFile$name),
-        dir = dirname(input$modFile$datapath),
-        add_CAPTURE = input$addcap
+      res <- withCallingHandlers(
+        tryCatch(
+          nm2mrg(
+            mod_name = gsub("\\..+$", "", input$modFile$name),
+            dir = dirname(input$modFile$datapath),
+            add_CAPTURE = input$addcap
+          ),
+          error = function(e) {
+            shinyalert::shinyalert(
+              title = "Error",
+              text = conditionMessage(e),
+              type = "error"
+            )
+            return(NULL)
+          }
+        ),
+        warning = function(w) {
+          shinyalert::shinyalert(
+            title = "Warning",
+            text = conditionMessage(w),
+            type = "warning"
+          )
+          invokeRestart("muffleWarning")
+        }
       )
+      if (is.null(res)) return()
+      output_text <- res
     } else if (!is.null(input$modFile2)) {
       if (length(unique(gsub("\\..+$", "", input$modFile2$name))) != 1) {
         shinyalert::shinyalert(
@@ -79,23 +102,38 @@ server <- function(input, output, session) {
           file.rename(input$modFile2$datapath[i], paste0(tmp_dir, "/", tmp_name))
         }
       }
-      output <- nm2mrg(
-        mod_name = gsub("\\..+$", "", input$modFile2$name[1]),
-        dir = dirname(input$modFile2$datapath[1]),
-        use_final = TRUE,
-        add_CAPTURE = input$addcap
+      res <- withCallingHandlers(
+        tryCatch(
+          nm2mrg(
+            mod_name = gsub("\\..+$", "", input$modFile2$name[1]),
+            dir = dirname(input$modFile2$datapath[1]),
+            use_final = TRUE,
+            add_CAPTURE = input$addcap
+          ),
+          error = function(e) {
+            shinyalert::shinyalert(
+              title = "Error",
+              text = conditionMessage(e),
+              type = "error"
+            )
+            return(NULL)
+          }
+        ),
+        warning = function(w) {
+          shinyalert::shinyalert(
+            title = "Warning",
+            text = conditionMessage(w),
+            type = "warning"
+          )
+          invokeRestart("muffleWarning")
+        }
       )
+      if (is.null(res)) return()
+      output_text <- res
     }
 
-    if (grepl("\\$PARAM", output)) {
-      shinyalert::shinyalert(
-        title = "Warning",
-        text = "Some covariates were detected. The initial value is set to 1 by default. Please update it as needed.",
-        type = "warning"
-      )
-    }
 
-    text_content(output)
+    text_content(output_text)
     updateTextAreaInput(session, "text", value = paste(text_content(), collapse = "\n"))
 
     conversion_complelte(TRUE)
