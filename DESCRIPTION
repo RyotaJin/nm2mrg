@@ -1,7 +1,7 @@
 Package: nm2mrg
 Type: Package
 Title: Convert NONMEM Model (.mod) To Mrgsolve Model (.cpp)
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: c(
     person(
       "Ryota", "Jin",

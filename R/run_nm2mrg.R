@@ -3,8 +3,8 @@
 #' @export
 run_nm2mrg <- function() {
   if (!requireNamespace("shiny", quietly = TRUE)) {
-    stop("The 'shiny' package is required to run this app.")
+    stop("The 'shiny' package is required to run app.")
   }
   appDir <- system.file("shiny", package = "nm2mrg")
-  shiny::runApp(appDir, display.mode = "normal")
+  shiny::shinyAppDir(appDir)
 }
