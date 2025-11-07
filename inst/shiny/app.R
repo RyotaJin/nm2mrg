@@ -4,7 +4,6 @@ library(shinyalert)
 
 
 ui <- fluidPage(
-  shinyalert::useShinyalert(),
   titlePanel("nm2mrg"),
   sidebarLayout(
     sidebarPanel(
