@@ -1,5 +1,7 @@
 # NONMEM to mrgsolve model converter
 
+English | [日本語](README.ja.md)
+
 <img src="man/figures/logo.png" align="right" height="150"/>
 
 This package provides a function to convert NONMEM model files (.mod) to mrgsolve model files (.cpp). It reads the NONMEM model file and generates a corresponding mrgsolve model file, allowing for easy integration of NONMEM models into the mrgsolve framework.
@@ -57,6 +59,12 @@ mod_code <- nm2mrg::nm2mrg(
 mod <- mrgsolve::mcode("run001", mod_code)
 ```
 
+You can also launch the Shiny application with the following functions.
+
+``` r
+run_nm2mrg()
+```
+
 ## `$ERROR` handling
 
 If `$ERROR` contains the marker below, nm2mrg converts only the code before the marker.
@@ -68,9 +76,3 @@ If `$ERROR` contains the marker below, nm2mrg converts only the code before the 
 If the marker is not present, nm2mrg does not emit a `$ERROR` block.
 
 Place observation-evaluation code such as residual calculations or M3 / BLQ handling after the marker.
-
-You can also launch the Shiny application with the following functions.
-
-``` r
-run_nm2mrg()
-```
