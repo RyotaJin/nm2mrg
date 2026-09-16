@@ -9,7 +9,14 @@
 #' @return A character string representing the mrgsolve model file content.
 #' @export
 nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, add_CAPTURE = TRUE) {
-  tmp_mod <- xpose::read_nm_model(runno = mod_name, prefix = "", dir = dir, ext = ".mod")
+  preprocessed_mod <- preprocess_mod_for_nm2mrg(mod_name = mod_name, dir = dir)
+  on.exit(unlink(preprocessed_mod$temp_dir, recursive = TRUE, force = TRUE), add = TRUE)
+
+  if (isTRUE(preprocessed_mod$error_dropped)) {
+    warning("$ERROR was dropped because no 'nm2mrg_drop' marker was found.")
+  }
+
+  tmp_mod <- xpose::read_nm_model(runno = mod_name, prefix = "", dir = preprocessed_mod$temp_dir, ext = ".mod")
   tmp_mod <- tmp_mod[tmp_mod$code != "", ]
 
   mrg_mod <- list()
@@ -135,13 +142,15 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, add_CAPTURE = TRUE) 
 
   error_lhs <- character(0)
   if (!has_pred) {
-    tmp_error <- sapply(tmp_mod[tmp_mod$subroutine == "err", ]$code, replace_pow_from_string, USE.NAMES = FALSE)
-    tmp_error <- sapply(tmp_error, function(x) ifelse("DV" %in% extract_all_variables(x), paste("//", x), x), USE.NAMES = FALSE)
-    error_lhs <- extract_lefthand_variables(tmp_error[!grepl("^//", tmp_error)])
-    tmp_error <- sapply(tmp_error, convert_if_line, USE.NAMES = FALSE)
-    tmp_error <- sapply(tmp_error, add_semicolon, USE.NAMES = FALSE)
-    tmp_error <- paste0(tmp_error, collapse = "\n")
-    mrg_mod$error <- paste0("$ERROR\n", tmp_error, "\n")
+    tmp_error_lines <- tmp_mod[tmp_mod$subroutine == "err", ]$code
+    if (length(tmp_error_lines) > 0) {
+      tmp_error <- sapply(tmp_error_lines, replace_pow_from_string, USE.NAMES = FALSE)
+      error_lhs <- extract_lefthand_variables(tmp_error)
+      tmp_error <- sapply(tmp_error, convert_if_line, USE.NAMES = FALSE)
+      tmp_error <- sapply(tmp_error, add_semicolon, USE.NAMES = FALSE)
+      tmp_error <- paste0(tmp_error, collapse = "\n")
+      mrg_mod$error <- paste0("$ERROR\n", tmp_error, "\n")
+    }
   }
 
   if (add_CAPTURE) {
@@ -181,6 +190,64 @@ format_code_with_comment <- function(code, comment = "") {
   }
 
   paste0(code, " // ", comment)
+}
+
+
+preprocess_mod_for_nm2mrg <- function(mod_name, dir) {
+  mod_path <- file.path(dir, paste0(mod_name, ".mod"))
+  mod_lines <- readLines(mod_path, warn = FALSE)
+
+  result <- filter_error_lines_for_nm2mrg(mod_lines)
+
+  temp_dir <- tempfile("nm2mrg-")
+  dir.create(temp_dir)
+  writeLines(result$lines, file.path(temp_dir, paste0(mod_name, ".mod")))
+
+  list(
+    temp_dir = temp_dir,
+    error_dropped = result$error_dropped
+  )
+}
+
+
+filter_error_lines_for_nm2mrg <- function(mod_lines) {
+  output_lines <- character(0)
+  i <- 1
+  error_dropped <- FALSE
+
+  while (i <= length(mod_lines)) {
+    line <- mod_lines[i]
+
+    if (!grepl("^\\s*\\$ERROR\\b", line)) {
+      output_lines <- c(output_lines, line)
+      i <- i + 1
+      next()
+    }
+
+    output_lines <- c(output_lines, line)
+    i <- i + 1
+
+    error_block <- character(0)
+    while (i <= length(mod_lines) && !grepl("^\\s*\\$[A-Za-z]", mod_lines[i])) {
+      error_block <- c(error_block, mod_lines[i])
+      i <- i + 1
+    }
+
+    marker_idx <- which(grepl("^\\s*;\\s*nm2mrg_drop\\s*$", error_block))
+
+    if (length(marker_idx) == 0) {
+      error_dropped <- TRUE
+      next()
+    }
+
+    keep_lines <- error_block[seq_len(marker_idx[1] - 1)]
+    output_lines <- c(output_lines, keep_lines)
+  }
+
+  list(
+    lines = output_lines,
+    error_dropped = error_dropped
+  )
 }
 
 
