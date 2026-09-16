@@ -2,12 +2,12 @@ $PROB SAMPLE (2-COMPARTMENT MODEL)
 
 $PLUGIN autodec nm-vars
 
-$THETA @annotated
-0.1 : CL [L/day]
-1 : V1 [L]
-0.1 : Q [L/day]
-1 : V2 [L]
-0.1 : W [-]
+$THETA
+0.1 // TVCL [L/day] : Clearance
+1 // TVV1 [L] : Central Volume
+0.1 // TVQ [L/day] : Intercompartmental Clearance
+1 // TVV2 [L] : Peripheral Volume
+0.1 // W [-] : Within-Subject Variability
 
 $CMT
 CENTRAL
@@ -29,14 +29,14 @@ A_0(1) = 0;
 A_0(2) = 0;
 
 $OMEGA @block
-0.1
-0.1 0.1
+0.1 // CL
+0.1 0.1 // V1
 $OMEGA
-0.1
-0.1
+0.1 // Q
+0.1 // V2
 
 $SIGMA
-1
+1 // Proportional residual error
 
 $DES
 if (T<=4) {

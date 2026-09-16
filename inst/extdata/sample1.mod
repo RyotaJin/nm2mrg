@@ -48,14 +48,14 @@ Y = IPRED * (1 + W * EPS(1))
 IWRES = (DV - IPRED) / (IPRED * W)
 
 $THETA
-(0, 0.1) ; CL [L/day]
-(0, 1)   ; V1 [L]
-(0, 0.1) ; Q  [L/day]
-(0, 1)   ; V2 [L]
-(0, 0.1) ; W  [-]
+(0, 0.1) ; TVCL   [L/day] : Clearance
+(0, 1)   ; TVV1   [L]     : Central Volume
+(0, 0.1) ; TVQ    [L/day] : Intercompartmental Clearance
+(0, 1)   ; TVV2   [L]     : Peripheral Volume
+(0, 0.1) ; W      [-]     : Within-Subject Variability
 
 $OMEGA BLOCK(2)
-0.1 ; CL
+0.1     ; CL
 0.1 0.1 ; V1
 
 $OMEGA
@@ -63,7 +63,7 @@ $OMEGA
 0.1 ; V2
 
 $SIGMA
-1 FIX
+1 FIX ; Proportional residual error
 
 $ESTIMATION
 

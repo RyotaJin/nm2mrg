@@ -31,12 +31,12 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, add_CAPTURE = TRUE) 
   if (use_final) {
     tmp_theta <- get_finalestimate_theta(mod_name, dir)
   } else {
-    tmp_theta <- "$THETA @annotated\n"
+    tmp_theta <- "$THETA\n"
     for (i in 1:nrow(tmp_mod[tmp_mod$subroutine == "the", ])) {
       tmp_theta_row <- tmp_mod[tmp_mod$subroutine == "the", ][i, ]
       theta <- extract_param(tmp_theta_row$code)
       theta <- gsub("FIX|FIXED", "", theta)
-      theta <- paste0(theta, " : ", tmp_theta_row$comment)
+      theta <- format_code_with_comment(theta, tmp_theta_row$comment)
       tmp_theta <- paste0(tmp_theta, theta, "\n")
     }
   }
@@ -88,6 +88,8 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, add_CAPTURE = TRUE) 
         f_omega_header <- FALSE
       }
 
+      tmp_omega_comment <- tmp_mod[tmp_mod$subroutine == "ome", "comment"][i, ]
+      tmp_omega_code <- format_code_with_comment(tmp_omega_code, tmp_omega_comment)
       tmp_omega <- paste0(tmp_omega, tmp_omega_code, "\n")
 
       if (omega_counter != 0) {
@@ -104,8 +106,10 @@ nm2mrg <- function(mod_name, dir = "./", use_final = FALSE, add_CAPTURE = TRUE) 
   if (use_final) {
     tmp_sigma <- get_finalestimate_sigma(mod_name, dir)
   } else {
-    tmp_sigma <- tmp_mod[tmp_mod$subroutine == "sig", "code"]
-    tmp_sigma <- apply(tmp_sigma, 1, function(x) gsub("FIX|FIXED| ", "", x))
+    tmp_sigma_code <- tmp_mod[tmp_mod$subroutine == "sig", "code"]
+    tmp_sigma_code <- apply(tmp_sigma_code, 1, function(x) gsub("FIX|FIXED| ", "", x))
+    tmp_sigma_comment <- tmp_mod[tmp_mod$subroutine == "sig", "comment"]
+    tmp_sigma <- mapply(format_code_with_comment, tmp_sigma_code, tmp_sigma_comment, USE.NAMES = FALSE)
     tmp_sigma <- paste0(tmp_sigma, collapse = "\n")
     tmp_sigma <- paste0("$SIGMA\n", tmp_sigma, "\n")
   }
@@ -165,6 +169,18 @@ extract_param <- function(prm_string) {
     "3" = extracted_params[2]
   )
   return(extracted_params)
+}
+
+
+format_code_with_comment <- function(code, comment = "") {
+  code <- trimws(code)
+  comment <- trimws(comment)
+
+  if (is.na(comment) || identical(comment, "")) {
+    return(code)
+  }
+
+  paste0(code, " // ", comment)
 }
 
 

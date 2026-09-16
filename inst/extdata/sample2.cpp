@@ -2,15 +2,15 @@ $PROB SAMPLE (2-COMPARTMENT MODEL)
 
 $PLUGIN autodec nm-vars
 
-$THETA @annotated
-0.1 : CL [L/day]
-1 : V1 [L]
-0.1 : Q [L/day]
-1 : V2 [L]
-0.1 : W [-]
-0.5 : V1SEX1 [-]
-0.5 : V1SEX2 [-]
-0.5 : V1WT [-]
+$THETA
+0.1 // TVCL [L/day] : Clearance
+1 // TVV1 [L] : Volume of distribution of the central compartment
+0.1 // TVQ [L/day] : Inter-compartmental clearance
+1 // TVV2 [L] : Volume of distribution of the peripheral compartment
+0.1 // W [-] : Proportional error
+0.5 // V1SEX1 [-] : Sex effect on V1
+0.5 // V1SEX2 [-] : Sex effect on V1
+0.5 // V1WT [-] : Weight effect on V1
 
 $PARAM @covariates
 WT = 1
@@ -30,9 +30,9 @@ V1SEX = THETA(7);
 } else {
 V1SEX = THETA(8);
 }
-V2COV = V1WT * V1SEX;
+V1COV = V1WT * V1SEX;
 TVV1 = THETA(2);
-V1 = TVV1 * EXP(ETA(2));
+V1 = TVV1 * V1COV * EXP(ETA(2));
 TVQ = THETA(3);
 Q = TVQ * EXP(ETA(3));
 TVV2 = THETA(4);
@@ -42,14 +42,14 @@ K12 = Q/V1;
 K21 = Q/V2;
 
 $OMEGA @block
-0.1
-0.1 0.1
+0.1 // CL
+0.1 0.1 // V1
 $OMEGA
-0.1
-0.1
+0.1 // Q
+0.1 // V2
 
 $SIGMA
-1
+1 // Proportional residual error
 
 $DES
 if (T<=4) {
