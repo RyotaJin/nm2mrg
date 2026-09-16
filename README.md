@@ -57,6 +57,18 @@ mod_code <- nm2mrg::nm2mrg(
 mod <- mrgsolve::mcode("run001", mod_code)
 ```
 
+## `$ERROR` handling
+
+If `$ERROR` contains the marker below, nm2mrg converts only the code before the marker.
+
+```text
+; nm2mrg_drop
+```
+
+If the marker is not present, nm2mrg does not emit a `$ERROR` block.
+
+Place observation-evaluation code such as residual calculations or M3 / BLQ handling after the marker.
+
 You can also launch the Shiny application with the following functions.
 
 ``` r

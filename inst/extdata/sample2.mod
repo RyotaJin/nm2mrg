@@ -54,6 +54,8 @@ W = THETA(5)
 
 Y = IPRED * (1 + W * EPS(1))
 
+; nm2mrg_drop
+
 IWRES = (DV - IPRED) / (IPRED * W)
 
 $THETA

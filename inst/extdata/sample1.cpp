@@ -49,7 +49,6 @@ $ERROR
 IPRED = A(1)/V1;
 W = THETA(5);
 Y = IPRED * (1 + W * EPS(1));
-// IWRES = (DV - IPRED)/(IPRED * W);
 
 $CAPTURE
 EVID CMT AMT IPRED W Y
